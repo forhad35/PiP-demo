@@ -1,8 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
+import 'package:zego_uikit_signaling_plugin/zego_uikit_signaling_plugin.dart';
 
 import '../call/home_page.dart';
+import '../constants.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -54,6 +57,17 @@ class _SignupScreenState extends State<SignupScreen> {
                 : 'User',
           });
 
+      // Init Zego Service
+      ZegoUIKitPrebuiltCallInvitationService().init(
+        appID: Constants.appId,
+        appSign: Constants.appSign,
+        userID: userCredential.user!.uid,
+        userName: _nameController.text.trim().isNotEmpty
+            ? _nameController.text.trim()
+            : 'User',
+        plugins: [ZegoUIKitSignalingPlugin()],
+      );
+
       if (mounted) {
         Navigator.of(
           context,
@@ -61,6 +75,7 @@ class _SignupScreenState extends State<SignupScreen> {
       }
     } catch (e) {
       if (mounted) {
+        debugPrint("Signup Failed: ${e.toString()}");
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Signup Failed: ${e.toString()}")),
         );

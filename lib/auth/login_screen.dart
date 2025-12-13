@@ -1,6 +1,10 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
+import 'package:zego_uikit_signaling_plugin/zego_uikit_signaling_plugin.dart';
+
 import '../call/home_page.dart';
+import '../constants.dart';
 import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -23,10 +27,23 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const HomePage()),
+
+      // Init Zego Service
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        ZegoUIKitPrebuiltCallInvitationService().init(
+          appID: Constants.appId,
+          appSign: Constants.appSign,
+          userID: user.uid,
+          userName: user.displayName ?? user.email ?? "User",
+          plugins: [ZegoUIKitSignalingPlugin()],
         );
+      }
+
+      if (mounted) {
+        Navigator.of(
+          context,
+        ).pushReplacement(MaterialPageRoute(builder: (_) => const HomePage()));
       }
     } catch (e) {
       if (mounted) {
@@ -40,9 +57,9 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _skipAuth() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const HomePage()),
-    );
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const HomePage()));
   }
 
   @override
@@ -67,19 +84,16 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 20),
             _isLoading
                 ? const CircularProgressIndicator()
-                : ElevatedButton(
-                    onPressed: _login,
-                    child: const Text("Login"),
-                  ),
+                : ElevatedButton(onPressed: _login, child: const Text("Login")),
             TextButton(
               onPressed: _skipAuth,
               child: const Text("Skip Auth (Dev Mode)"),
             ),
             TextButton(
               onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const SignupScreen()),
-                );
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const SignupScreen()));
               },
               child: const Text("Don't have an account? Sign Up"),
             ),

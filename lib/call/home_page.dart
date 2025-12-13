@@ -1,10 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:pip_plugin/pip_configuration.dart';
 import 'package:pip_plugin/pip_plugin.dart';
-
-import 'call_screen.dart';
+import 'package:zego_uikit/zego_uikit.dart';
+import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -16,12 +17,17 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final _pipPlugin = PipPlugin();
 
-  // Helper to generate a consistent call ID for two users
-  String _getCallID(String currentUserId, String targetUserId) {
-    List<String> ids = [currentUserId, targetUserId];
-    ids.sort(); // Sort to ensure consistent ID regardless of who calls
-    return "${ids[0]}_${ids[1]}";
+  @override
+  void initState() {
+    super.initState();
+    _requestPermissions();
   }
+
+  Future<void> _requestPermissions() async {
+    await [Permission.camera, Permission.microphone].request();
+  }
+
+  // Helper to generate a consistent call ID for two users - Removed as we use Zego Invitation Service now
 
   @override
   Widget build(BuildContext context) {
@@ -93,72 +99,72 @@ class _HomePageState extends State<HomePage> {
                               userData['uid'] ?? users[index].id;
                           final String targetEmail = userData['email'] ?? "";
 
-                          return Card(
+                          return Container(
                             margin: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 8,
                             ),
-                            child: ListTile(
-                              leading: CircleAvatar(
-                                child: Text(
-                                  targetName.isNotEmpty
-                                      ? targetName[0].toUpperCase()
-                                      : "?",
+                            padding: const EdgeInsets.all(20),
+                            clipBehavior: Clip.hardEdge,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black26,
+                                  blurRadius: 5,
+                                  offset: const Offset(0, 2),
                                 ),
-                              ),
-                              title: Text(targetName),
-                              subtitle: Text(targetEmail),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.videocam,
-                                      color: Colors.blue,
-                                    ),
-                                    onPressed: () {
-                                      final callID = _getCallID(
-                                        currentUserId,
-                                        targetUid,
-                                      );
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => CallScreen(
-                                            callID: callID,
-                                            userID: currentUserId,
-                                            userName: currentUserName,
-                                            isVideoCall: true,
-                                          ),
-                                        ),
-                                      );
-                                    },
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                CircleAvatar(
+                                  child: Text(
+                                    targetName.isNotEmpty
+                                        ? targetName[0].toUpperCase()
+                                        : "?",
                                   ),
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.call,
-                                      color: Colors.green,
-                                    ),
-                                    onPressed: () {
-                                      final callID = _getCallID(
-                                        currentUserId,
-                                        targetUid,
-                                      );
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => CallScreen(
-                                            callID: callID,
-                                            userID: currentUserId,
-                                            userName: currentUserName,
-                                            isVideoCall: false,
-                                          ),
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(targetName),
+                                    Text(targetEmail),
+                                  ],
+                                ),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    ZegoSendCallInvitationButton(
+                                      buttonSize: const Size(40, 40),
+                                      isVideoCall: true,
+                                      resourceID:
+                                          "zego_data", // For offline call notification
+                                      invitees: [
+                                        ZegoUIKitUser(
+                                          id: targetUid,
+                                          name: targetName,
                                         ),
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ),
+                                      ],
+                                    ),
+                                    ZegoSendCallInvitationButton(
+                                      buttonSize: const Size(40, 40),
+                                      isVideoCall: false,
+                                      resourceID:
+                                          "zego_data", // For offline call notification
+                                      invitees: [
+                                        ZegoUIKitUser(
+                                          id: targetUid,
+                                          name: targetName,
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
                           );
                         },
