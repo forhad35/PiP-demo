@@ -24,7 +24,18 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _requestPermissions() async {
-    await [Permission.camera, Permission.microphone].request();
+    try {
+      // Check if permissions are already granted to avoid unnecessary requests
+      final cameraStatus = await Permission.camera.status;
+      final microphoneStatus = await Permission.microphone.status;
+
+      if (!cameraStatus.isGranted || !microphoneStatus.isGranted) {
+        await [Permission.camera, Permission.microphone].request();
+      }
+    } catch (e) {
+      // Handle the case where a request is already in progress
+      debugPrint("Error requesting permissions: $e");
+    }
   }
 
   // Helper to generate a consistent call ID for two users - Removed as we use Zego Invitation Service now
